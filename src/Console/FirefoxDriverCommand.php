@@ -5,6 +5,7 @@ namespace Derekmd\Dusk\Console;
 use Derekmd\Dusk\Concerns\DownloadsBinaries;
 use Derekmd\Dusk\Exceptions\DownloadException;
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
 use Laravel\Dusk\OperatingSystem;
 use RuntimeException;
 
@@ -83,7 +84,13 @@ class FirefoxDriverCommand extends Command
             return 1;
         }
 
-        $currentOS = OperatingSystem::id();
+        $currentOSRaw = OperatingSystem::id();
+
+        if($currentOSRaw === 'mac-arm') {
+            $this->info('ARM based macOS detected. Falling back to Intel build of Geckodriver.');
+        }
+
+        $currentOS = (string) Str::of($currentOSRaw)->replace(['mac-intel', 'mac-arm'], 'mac');
 
         $osSuccesses = [];
         $osFailures = [];
@@ -91,6 +98,7 @@ class FirefoxDriverCommand extends Command
         foreach ($this->slugs as $os => $slug) {
             if ($this->option('all') || ($os === $currentOS)) {
                 try {
+
                     $archive = $this->download($version, $slug);
 
                     $binary = $this->extract($archive, $slug, $this->directory);
