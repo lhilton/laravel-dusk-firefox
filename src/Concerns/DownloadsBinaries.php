@@ -80,7 +80,7 @@ trait DownloadsBinaries
         $output = [];
         $exitCode = 0;
 
-        $isSuccessful = exec(vsprintf('tar -xvzf %s -C %s', [
+        $isSuccessful = exec(vsprintf('tar -xvzf %s -C %s 2>&1', [
             escapeshellarg($archive),
             escapeshellarg($directory),
         ]), $output, $exitCode);
@@ -102,9 +102,12 @@ trait DownloadsBinaries
         }
 
         if (! empty($output)) {
-            $binaryPath = $output[count($output) - 1];
+            $binaryPath = \Str::of($output[count($output) - 1]);
+            $binaryPath = $binaryPath->startsWith('x ')
+                            ? $binaryPath->after('x ')
+                            : $binaryPath;
 
-            return basename($binaryPath);
+            return basename((string) $binaryPath);
         }
     }
 
